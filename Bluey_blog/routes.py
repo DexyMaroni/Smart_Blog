@@ -15,6 +15,7 @@ def landing_page():
     ''' Returns a landing page. '''
     return render_template('landing_page.html', title ="Landing Page")
  
+
 @app.route("/home")
 def home():
     ''' Returns a home page consisting of posts. '''
@@ -27,9 +28,6 @@ def home():
 def about():
     ''' Returns an about page that briefly talks about the developer and purpose of this project. '''
     return render_template('about.html')
-
-
-
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -48,7 +46,6 @@ def register():
         flash(f"Hurray!!! Your Account has been created!!! You are now able to log in", 'success')
         return redirect(url_for('login'))
     return render_template('register.html', title= 'Register', form=form )
-
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -92,7 +89,6 @@ def save_picture(form_picture):
     return picture_fn # Returns the filename that acts as a pointer to the image file
 
 
-
 @app.route("/account", methods=['GET', 'POST'])
 @login_required
 def account():
@@ -114,8 +110,6 @@ def account():
     image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
     # The database dosen't save the image file but the filename and location of the image for each user.
     return render_template('account.html', title='Account', image_file=image_file, form = form)
-
-
 
 
 @app.route("/post/new",  methods=['GET', 'POST'])
@@ -146,7 +140,6 @@ def post(post_id):
     comments = Comment.query.filter_by(post_id=post.id).all()
     return render_template('post.html', title=post.title, post=post, comments=comments, form=form)
     
-
 
 @app.route("/post/<int:post_id>/update", methods= ['GET', 'POST'])
 @login_required # Ensuring that only authorized user can proceed.
@@ -237,7 +230,6 @@ def reset_token(token):
     return render_template('reset_token.html', title= 'Reset Password', form=form)
 
 
-
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template('404.html'),404
@@ -254,8 +246,6 @@ def page_not_found(error):
 
 # Route to update a comment
 # routes.py
-
-
 @app.route("/comment/<int:comment_id>/update", methods=['GET', 'POST'])
 @login_required
 def update_comment(comment_id):
@@ -272,7 +262,6 @@ def update_comment(comment_id):
     elif request.method == 'GET':
         form.content.data = comment.content
     return render_template('update_comment.html', title='Update Comment', form=form, current_user=current_user, comment= comment)
-
 
 
 # Route to delete a comment
