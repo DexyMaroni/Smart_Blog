@@ -1,0 +1,169 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container">
+  <!-- Post Content -->
+  <article class="content-section">
+    <div class="media">
+      <img class="mr-3 rounded-circle" src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}" alt="Profile image" width="50" height="50">
+      <div class="media-body">
+        <h1>{{ post.title }}</h1>
+        <h5 class="mt-0">
+          <a href="{{ url_for('account', username=post.author.username) }}">{{ post.author.username }}</a>
+          <small class="text-muted">{{ post.date_posted.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+        </h5>
+        <p>{{ post.content }}</p>
+      </div>
+    </div>
+  </article>
+
+  <!-- Comments Section -->
+  <section class="comment-section">
+    <h2>Comments</h2>
+    <ul class="list-group mb-3">
+      {% for comment in comments.items %}
+        <li class="list-group-item">
+          <div class="media">
+            <img class="mr-3 rounded-circle" src="{{ url_for('static', filename='profile_pics/' + comment.author.image_file) }}" alt="Profile image" width="50" height="50">
+            <div class="media-body">
+              <div class="comment-header">
+                <h5 class="mt-0">
+                  <a href="{{ url_for('account', username=comment.author.username) }}">{{ comment.author.username }}</a>
+                  <small class="text-muted">{{ comment.date_posted.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                </h5>
+                <form method="POST" action="{{ url_for('upvote_comment', comment_id=comment.id) }}" style="display: inline;">
+                  <button type="submit" class="btn btn-sm btn-outline-primary">
+                    Upvote <i class="fas fa-thumbs-up"></i> {{ comment.upvotes }}
+                  </button>
+                </form>
+                <form method="POST" action="{{ url_for('downvote_comment', comment_id=comment.id) }}" style="display: inline;">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    Downvote <i class="fas fa-thumbs-down"></i> {{ comment.downvotes }}
+                  </button>
+                </form>
+                <button class="btn btn-sm btn-outline-secondary" data-toggle="collapse" data-target="#reply-{{ comment.id }}" aria-expanded="false" aria-controls="reply-{{ comment.id }}">
+                  Reply
+                </button>
+                {% if comment.author == current_user %}
+                  <a href="{{ url_for('edit_comment', comment_id=comment.id) }}" class="btn btn-sm btn-outline-warning">Edit</a>
+                  <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                  </form>
+                {% endif %}
+              </div>
+              <p>{{ comment.content }}</p>
+
+              <!-- Reply Section -->
+              <div class="collapse" id="reply-{{ comment.id }}">
+                {% if current_user.is_authenticated %}
+                  <form method="POST" action="{{ url_for('post', post_id=post.id) }}">
+                    {{ reply_form.hidden_tag() }}
+                    <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                    <div class="form-group">
+                      {{ reply_form.content.label(class="form-control-label") }}
+                      {{ reply_form.content(class="form-control form-control-sm") }}
+                    </div>
+                    <div class="form-group">
+                      {{ reply_form.submit(class="btn btn-primary btn-sm") }}
+                    </div>
+                  </form>
+                {% else %}
+                  <p>You need to <a href="{{ url_for('login') }}">login</a> to reply to a comment.</p>
+                {% endif %}
+              </div>
+
+              <!-- Replies -->
+              <ul class="list-group mt-3">
+                {% for reply in comment.replies %}
+                  <li class="list-group-item">
+                    <div class="media">
+                      <img class="mr-3 rounded-circle" src="{{ url_for('static', filename='profile_pics/' + reply.author.image_file) }}" alt="Profile image" width="40" height="40">
+                      <div class="media-body">
+                        <div class="comment-header">
+                          <h5 class="mt-0">
+                            <a href="{{ url_for('account', username=reply.author.username) }}">{{ reply.author.username }}</a>
+                            <small class="text-muted">{{ reply.date_posted.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                          </h5>
+                          {% if reply.author == current_user %}
+                            <a href="{{ url_for('edit_comment', comment_id=reply.id) }}" class="btn btn-sm btn-outline-warning">Edit</a>
+                            <form method="POST" action="{{ url_for('delete_comment', comment_id=reply.id) }}" style="display: inline;">
+                              <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                          {% endif %}
+                        </div>
+                        <p>{{ reply.content }}</p>
+                      </div>
+                    </div>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+
+    <!-- Pagination -->
+    {% if comments.total > comments.per_page %}
+      <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+          {% if comments.has_prev %}
+            <li class="page-item">
+              <a class="page-link" href="{{ url_for('post', post_id=post.id, page=comments.prev_num) }}" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+                <span class="sr-only">Previous</span>
+              </a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link" aria-hidden="true">&laquo;</span>
+              <span class="sr-only">Previous</span>
+            </li>
+          {% endif %}
+          {% for page in comments.iter_pages() %}
+            {% if page %}
+              {% if page != comments.page %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('post', post_id=post.id, page=page) }}">{{ page }}</a></li>
+              {% else %}
+                <li class="page-item active"><span class="page-link">{{ page }}</span></li>
+              {% endif %}
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+          {% endfor %}
+          {% if comments.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="{{ url_for('post', post_id=post.id, page=comments.next_num) }}" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+                <span class="sr-only">Next</span>
+              </a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link" aria-hidden="true">&raquo;</span>
+              <span class="sr-only">Next</span>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  </section>
+
+  <!-- Comment Form -->
+  {% if current_user.is_authenticated %}
+    <section class="comment-form-section">
+      <form method="POST" action="">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+          {{ form.content.label(class="form-control-label") }}
+          {{ form.content(class="form-control form-control-lg") }}
+        </div>
+        <div class="form-group">
+          {{ form.submit(class="btn btn-primary btn-lg") }}
+        </div>
+      </form>
+    </section>
+  {% else %}
+    <p>You need to <a href="{{ url_for('login') }}">login</a> to post a comment.</p>
+  {% endif %}
+</div>
+{% endblock content %}
