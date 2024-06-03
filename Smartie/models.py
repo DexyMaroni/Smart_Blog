@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 import json
 from time import time
 from itsdangerous import URLSafeSerializer, TimestampSigner
-from Bluey_blog import db, login_manager, app
+from Smartie import db, login_manager, app
 from flask_login import UserMixin
 
 
