@@ -16,7 +16,31 @@ from flask_paginate import Pagination, get_page_parameter
 def landing_page():
     ''' Returns a landing page. '''
     return render_template('landing_page.html', title ="Landing Page")
- 
+
+
+@app.route("/comment/<int:comment_id>/delete", methods=['POST'])
+@login_required
+def delete_comment(comment_id):
+     """
+     Deletes a comment by its ID if the user is logged in and is the author of the comment.
+     
+     Parameters:
+         comment_id (int): The ID of the comment to be deleted.
+     
+     Returns:
+         redirect: A redirect to the post page of the comment's post.
+     
+     Raises:
+         abort(403): If the user is not logged in or is not the author of the comment.
+     """
+     comment = Comment.query.get_or_404(comment_id)
+     if comment.author != current_user:
+         abort(403)
+     post_id = comment.post_id
+     db.session.delete(comment)
+     db.session.commit()
+     flash('Your comment has been deleted!', 'success')
+     return redirect(url_for('post', post_id=post_id))
 @app.route("/home")
 def home():
     ''' Returns a home page consisting of posts. '''
@@ -172,9 +196,19 @@ def post(post_id):
 @app.route("/comment/<int:comment_id>/delete", methods=['POST'])
 @login_required
 def delete_comment(comment_id):
-    comment = Comment.query.get_or_404(comment_id)
-    if comment.author != current_user:
-        abort(403)
+    """
+    Deletes a comment by its ID if the user is logged in and is the author of the comment.
+    
+    Parameters:
+        comment_id (int): The ID of the comment to be deleted.
+    
+    Returns:
+        redirect: A redirect to the post page of the comment's post.
+    
+    Raises:
+        abort(403): If the user is not logged in or is not the author of the comment.
+    """
+    abort(403)
     post_id = comment.post_id
     db.session.delete(comment)
     db.session.commit()
@@ -184,6 +218,18 @@ def delete_comment(comment_id):
 @app.route("/comment/<int:comment_id>/edit", methods=['GET', 'POST'])
 @login_required
 def edit_comment(comment_id):
+    """
+    Edit a comment with the given comment_id.
+
+    Parameters:
+        comment_id (int): The ID of the comment to be edited.
+
+    Returns:
+        flask.Response: The response object containing the rendered template or a redirect to the post page.
+
+    Raises:
+        403: If the current user is not the author of the comment.
+    """
     comment = Comment.query.get_or_404(comment_id)
     if comment.author != current_user:
         abort(403)
@@ -332,23 +378,57 @@ def reset_token(token):
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template('404.html'),404
+    """
+    Handles the HTTP 404 error by rendering the '404.html' template and returning it with a 404 status code.
+
+    :param error: The HTTP 404 error object.
+    :type error: werkzeug.exceptions.HTTPException
+
+    :return: A tuple containing the rendered '404.html' template and the 404 status code.
+    :rtype: tuple[str, int]
+    """
 
 
 @app.errorhandler(401)
 def page_not_found(error):
-    return render_template('401.html'),401
+        """
+        Handles the HTTP 401 error by rendering the '401.html' template and returning it with a 401 status code.
+        
+        :param error: The HTTP 401 error object.
+        :type error: werkzeug.exceptions.HTTPException
+        
+        :return: A tuple containing the rendered '401.html' template and the 401 status code.
+        :rtype: tuple[str, int]
+        """
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template('500.html'),500
+    """
+    Handles the HTTP 404 error by rendering the '500.html' template and returning it with a 500 status code.
+
+    :param error: The HTTP 404 error object.
+    :type error: werkzeug.exceptions.HTTPException
+
+    :return: A tuple containing the rendered '500.html' template and the 500 status code.
+    :rtype: tuple[str, int]
+    """
 
 
 # Route to update a comment
 @app.route("/comment/<int:comment_id>/update", methods=['GET', 'POST'])
 @login_required
 def update_comment(comment_id):
-    comment = Comment.query.get_or_404(comment_id)
+    """
+    Updates a comment with the given comment_id if the user is logged in and is the author of the comment.
+    
+    :param comment_id: The ID of the comment to be updated.
+    :type comment_id: int
+    
+    :return: If the comment is successfully updated, redirects to the post page of the comment's post with a success message.
+             If the user is not logged in or is not the author of the comment, returns a 403 error.
+             If the comment is not found, returns a 404 error.
+    :rtype: flask.Response
+    """
     if comment.author != current_user:
         abort(403)
     form = UpdateCommentForm()
@@ -370,7 +450,20 @@ def update_comment(comment_id):
 @app.route("/comment/<int:comment_id>/upvote", methods=['POST'])
 @login_required
 def upvote_comment(comment_id):
+    """
+    Updates the upvotes count of a comment with the given comment_id if the user is logged in.
+    
+    :param comment_id: The ID of the comment to be upvoted.
+    :type comment_id: int
+    
+    :return: Redirects to the post page of the comment's post with a success message.
+             If the user is not logged in, returns a 403 error.
+             If the comment is not found, returns a 404 error.
+    :rtype: flask.Response
+    """
     comment = Comment.query.get_or_404(comment_id)
+    if current_user == comment.author:
+        abort(403)
     comment.upvotes += 1
     db.session.commit()
     flash('Comment upvoted!', 'success')
