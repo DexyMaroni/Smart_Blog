@@ -1,4 +1,4 @@
-from Bluey_blog import app
+from Smartie import app
 
 if __name__ == '__main__':
     app.run(debug=True)
