@@ -10,6 +10,7 @@ from flask_mail import Message
 from Bluey_blog.forms import CommentForm, UpdateCommentForm
 from datetime import datetime, timezone
 
+
 @app.route("/")
 def landing_page():
     ''' Returns a landing page. '''
